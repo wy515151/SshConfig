@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       ">
+
+    <!-- 数据源 c3p0 (dbcp)-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <!-- 驱动 -->
+        <property name="driverClass" value="com.mysql.jdbc.Driver" />
+
+        <!-- 连接字符串 -->
+        <property name="jdbcUrl" value="jdbc:mysql://120.79.87.228:3306/xsh"/>
+
+        <!-- 用户名 -->
+        <property name="user" value="root"/>
+
+        <!-- 密码 -->
+        <property name="password" value="accp"/>
+
+        <!-- 最小连接数 -->
+        <property name="minPoolSize" value="2" />
+        <!-- 最大连接数	 	default:15 -->
+        <property name="maxPoolSize" value="20" />
+        <!-- 初始化连接数	defualt:3  -->
+        <property name="initialPoolSize" value="5"/>
+        <!-- 空闲时间 		defualt:0  -->
+        <property name="maxIdleTime" value="60"/>
+        <!-- 当连接数耗尽时，再次获取	default:3 -->
+        <property name="acquireIncrement" value="4"/>
+    </bean>
+
+
+    <!-- sessionFactory -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <!-- 数据源 -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 指定注解类所在包 -->
+        <property name="packagesToScan" value="com.bdqn.pojo"/>
+
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+            </props>
+        </property>
+    </bean>
+
+
+
+    <!-- 创建事务管理器 -->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+
+    <!-- 声明式事务 -->
+    <aop:config>
+
+        <!-- 切入点 com.bdqn.service包下的所有类中的所有方法（无论是否带参）-->
+        <aop:pointcut id="transactionPointcut" expression="execution(* com.bdqn.service.*.*(..))"/>
+
+        <!-- 增强处理与切入点的管理器 -->
+        <aop:advisor advice-ref="transactionAdvice" pointcut-ref="transactionPointcut"/>
+
+    </aop:config>
+
+    <!-- 增强处理 -->
+    <tx:advice id="transactionAdvice" transaction-manager="transactionManager">
+
+        <!-- 事务规则 -->
+        <tx:attributes>
+            <tx:method name="add*" />
+        </tx:attributes>
+
+    </tx:advice>
+
+</beans>
